@@ -74,12 +74,12 @@ class BaseClient(ABC):
     client_params:
         ClientParams instance.
 
-    _rate_limit: int = 18
+    _rate_limit: int
         Rate limit for the API is 20 when you have an API key.
         However, you run the risk of losing a a few seconds if you get throttled by the server.
         After some testing, it seems 18 is the sweet spot.
 
-    _concurrency_limit: int = 9
+    _concurrency_limit: int
         Concurrency limit: number of simultaneous connections at a time.
         Best results obtained by using the largest multiple of _rate_limit, or second largest multiple.
         Otherwise you risk more throttling on the serverside than necessary.
@@ -117,13 +117,13 @@ class BaseClient(ABC):
         if sys.platform == 'win32':
             asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())  # prevents closed loops errors on windows
         self._latest_json_response = None  # reset: required for pagination function
-        results = asyncio.run(self._aget_parsed_pages())  # implement async generator so i can use yield from
+        results = asyncio.run(self._aget_parsed_pages())
         if not flat:
             return results
         flattened = list(chain.from_iterable(results))
         return flattened
 
-    async def _aget_parsed_pages(self) -> list[list[Type[BaseResponse]]]:  # cant be a synchronous generator
+    async def _aget_parsed_pages(self) -> list[list[Type[BaseResponse]]]:
         all_parsed_jsons = list()
 
         async with RateLimiter(rate_limit=self._rate_limit, concurrency_limit=self._concurrency_limit) as rate_limiter:
